@@ -45,7 +45,7 @@ def patching(WSI_object, **kwargs):
 	return file_path, patch_time_elapsed
 
 
-def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_dir, 
+def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_dir, mask_folder,
 				  patch_size = 256, step_size = 256, 
 				  seg_params = {'seg_level': -1, 'sthresh': 8, 'mthresh': 7, 'close': 4, 'use_otsu': False,
 				  'keep_ids': 'none', 'exclude_ids': 'none'},
@@ -105,6 +105,11 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 		# Inialize WSI
 		full_path = os.path.join(source, slide)
 		WSI_object = WholeSlideImage(full_path)
+
+		if mask_folder is not None:
+			mask_file = os.path.join(mask_folder, slide_id+'.pkl')
+		else:
+			mask_file = None
 
 		if use_default_params:
 			current_vis_params = vis_params.copy()
@@ -186,7 +191,7 @@ def seg_and_patch(source, save_dir, patch_save_dir, mask_save_dir, stitch_save_d
 
 		seg_time_elapsed = -1
 		if seg:
-			WSI_object, seg_time_elapsed = segment(WSI_object, current_seg_params, current_filter_params) 
+			WSI_object, seg_time_elapsed = segment(WSI_object, current_seg_params, current_filter_params, mask_file = mask_file) 
 
 		if save_mask:
 			mask = WSI_object.visWSI(**current_vis_params)
@@ -246,6 +251,8 @@ parser.add_argument('--patch_level', type=int, default=0,
 					help='downsample level at which to patch')
 parser.add_argument('--process_list',  type = str, default=None,
 					help='name of list of images to process with parameters (.csv)')
+parser.add_argument('--mask_folder',  type = str, default=None,
+					help='folder for preannotated mask files (.pkl)')
 
 if __name__ == '__main__':
 	args = parser.parse_args()
@@ -269,7 +276,8 @@ if __name__ == '__main__':
 				   'save_dir': args.save_dir,
 				   'patch_save_dir': patch_save_dir, 
 				   'mask_save_dir' : mask_save_dir, 
-				   'stitch_save_dir': stitch_save_dir} 
+				   'stitch_save_dir': stitch_save_dir,
+				   'mask_folder': args.mask_folder} 
 
 	for key, val in directories.items():
 		print("{} : {}".format(key, val))

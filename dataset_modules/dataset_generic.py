@@ -62,6 +62,9 @@ class Generic_WSI_Classification_Dataset(Dataset):
 		self.label_col = label_col
 
 		slide_data = pd.read_csv(csv_path)
+		# if there is no case_id column add one with values 0
+		if 'case_id' not in slide_data.columns:
+			slide_data.insert(1, 'case_id', range(len(slide_data)))	
 		slide_data = self.filter_df(slide_data, filter_dict)
 		slide_data = self.df_prep(slide_data, self.label_dict, ignore, self.label_col)
 
@@ -176,8 +179,10 @@ class Generic_WSI_Classification_Dataset(Dataset):
 
 			for split in range(len(ids)): 
 				for idx in ids[split]:
-					case_id = self.patient_data['case_id'][idx]
-					slide_indices = self.slide_data[self.slide_data['case_id'] == case_id].index.tolist()
+					# case_id = self.patient_data['case_id'][idx]
+					# slide_indices = self.slide_data[self.slide_data['case_id'] == case_id].index.tolist()
+					label_id = self.patient_data['case_id'][idx]
+					slide_indices = self.slide_data[self.slide_data['case_id'] == label_id].index.tolist()
 					slide_ids[split].extend(slide_indices)
 
 			self.train_ids, self.val_ids, self.test_ids = slide_ids[0], slide_ids[1], slide_ids[2]
@@ -296,7 +301,7 @@ class Generic_WSI_Classification_Dataset(Dataset):
 
 		assert len(np.intersect1d(self.train_ids, self.test_ids)) == 0
 		assert len(np.intersect1d(self.train_ids, self.val_ids)) == 0
-		assert len(np.intersect1d(self.val_ids, self.test_ids)) == 0
+		# assert len(np.intersect1d(self.val_ids, self.test_ids)) == 0
 
 		if return_descriptor:
 			return df

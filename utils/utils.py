@@ -92,6 +92,31 @@ def print_network(net):
 	print('Total number of parameters: %d' % num_params)
 	print('Total number of trainable parameters: %d' % num_params_train)
 
+def split_ids(cls_ids, val_num = (1,1,1), test_num = (0,0,0), samples = None, n_splits = 5, seed = 7):
+    # Initialize empty lists for validation and training IDs
+    val_ids = []
+    test_ids = []
+    train_ids = []
+
+    # Get all indices excluding custom_test_ids
+    indices = np.arange(samples).astype(int)
+
+    # Iterate over each class ID set
+    for c in range(len(val_num)):
+        # Find possible indices for the current class
+        possible_indices = np.intersect1d(cls_ids[c], indices)
+
+        # Randomly select validation IDs
+        selected_val_ids = np.random.choice(possible_indices, val_num[c], replace=False)
+        val_ids.extend(selected_val_ids)
+
+        # Find remaining IDs for training
+        remaining_ids = np.setdiff1d(possible_indices, selected_val_ids)
+        train_ids.extend(remaining_ids)
+
+    return np.array(val_ids), np.array(train_ids)
+
+
 
 def generate_split(cls_ids, val_num, test_num, samples, n_splits = 5,
 	seed = 7, label_frac = 1.0, custom_test_ids = None):
@@ -129,6 +154,8 @@ def generate_split(cls_ids, val_num, test_num, samples, n_splits = 5,
 				sample_num  = math.ceil(len(remaining_ids) * label_frac)
 				slice_ids = np.arange(sample_num)
 				sampled_train_ids.extend(remaining_ids[slice_ids])
+		if len(all_test_ids) == 0:
+			all_test_ids = all_val_ids
 
 		yield sampled_train_ids, all_val_ids, all_test_ids
 
